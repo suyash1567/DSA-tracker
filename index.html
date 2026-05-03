@@ -259,7 +259,7 @@ body { font-family: var(--font-sans); background: var(--bg); color: var(--text);
 /* ══════════════════════════════════════════════════════════════
    ⚙️  CONFIG — paste your Supabase values here
    ══════════════════════════════════════════════════════════════ */
-const SUPABASE_URL      = 'https://rcmgnfynhfjmblgkkmuv.supabase.co/rest/v1/';      // e.g. https://xyzabc.supabase.co
+const SUPABASE_URL      = 'https://rcmgnfynhfjmblgkkmuv.supabase.co';      // e.g. https://xyzabc.supabase.co
 const SUPABASE_ANON_KEY = 'sb_publishable_lTI9QUEpONZikR4ofRHkLQ_LGjGtz4R'; // long JWT string
 
 /* ══════════════════════════════════════════════════════════════
@@ -438,13 +438,13 @@ const ALL_PATTERNS = [...new Set(IDX.flatMap(p => p.patterns))].sort();
 /* ══════════════════════════════════════════════════════════════
    SUPABASE INIT
    ══════════════════════════════════════════════════════════════ */
-let supabase = null;
+let supabaseClient = null;
 let currentUser = null;
 
 const CONFIGURED = SUPABASE_URL !== 'YOUR_SUPABASE_URL' && SUPABASE_ANON_KEY !== 'YOUR_SUPABASE_ANON_KEY';
 
 if (CONFIGURED) {
-  supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 }
 
 /* ══════════════════════════════════════════════════════════════
@@ -466,9 +466,9 @@ async function init() {
     return;
   }
 
-  const { data: { session } } = await supabase.auth.getSession();
+  const { data: { session } } = await supabaseClient.auth.getSession();
 
-  supabase.auth.onAuthStateChange(async (event, session) => {
+  supabaseClient.auth.onAuthStateChange(async (event, session) => {
     if (session?.user) {
       await showApp(session.user);
     } else {
@@ -515,7 +515,7 @@ async function showApp(user) {
 
 async function signInWithGoogle() {
   if (!CONFIGURED) return;
-  const { error } = await supabase.auth.signInWithOAuth({
+  const { error } = await supabaseClient.auth.signInWithOAuth({
     provider: 'google',
     options: { redirectTo: window.location.origin + window.location.pathname }
   });
@@ -523,7 +523,7 @@ async function signInWithGoogle() {
 }
 
 async function signOut() {
-  if (supabase) await supabase.auth.signOut();
+  if (supabaseClient) await supabaseClient.auth.signOut();
   state = {}; showAuth();
 }
 
@@ -540,7 +540,7 @@ async function loadProgress() {
   if (!CONFIGURED || !currentUser) return;
   setSyncStatus('syncing');
   try {
-    const { data, error } = await supabase
+    const { data, error } = await supabaseClient
       .from('progress')
       .select('problem_id, status, attempts, last_solved')
       .eq('user_id', currentUser.id);
@@ -581,7 +581,7 @@ async function flushSave() {
   }));
   syncQueue = {};
   try {
-    const { error } = await supabase.from('progress').upsert(rows, { onConflict: 'user_id,problem_id' });
+    const { error } = await supabaseClient.from('progress').upsert(rows, { onConflict: 'user_id,problem_id' });
     if (error) throw error;
     setSyncStatus('ok');
   } catch(e) {
