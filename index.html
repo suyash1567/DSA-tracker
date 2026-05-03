@@ -555,7 +555,9 @@ let currentUser = null;
 const CONFIGURED = SUPABASE_URL !== 'YOUR_SUPABASE_URL' && SUPABASE_ANON_KEY !== 'YOUR_SUPABASE_ANON_KEY';
 
 if (CONFIGURED) {
-  supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+    auth: { detectSessionInUrl: true, persistSession: true, autoRefreshToken: true }
+  });
 }
 
 /* ══════════════════════════════════════════════════════════════
@@ -577,19 +579,35 @@ async function init() {
     return;
   }
 
-  const { data: { session } } = await supabaseClient.auth.getSession();
+  // Safety net — if auth hangs for 6s, show login screen anyway
+  const timeout = setTimeout(() => {
+    if (document.getElementById('loading-screen').style.display !== 'none') {
+      showAuth();
+    }
+  }, 6000);
 
-  supabaseClient.auth.onAuthStateChange(async (event, session) => {
+  try {
+    // Let onAuthStateChange drive everything — it fires on load too
+    supabaseClient.auth.onAuthStateChange(async (event, session) => {
+      clearTimeout(timeout);
+      if (session?.user) {
+        await showApp(session.user);
+      } else {
+        showAuth();
+      }
+    });
+
+    // Also check session directly in case onAuthStateChange is slow
+    const { data: { session } } = await supabaseClient.auth.getSession();
+    clearTimeout(timeout);
     if (session?.user) {
       await showApp(session.user);
     } else {
       showAuth();
     }
-  });
-
-  if (session?.user) {
-    await showApp(session.user);
-  } else {
+  } catch(e) {
+    clearTimeout(timeout);
+    console.error('Auth init error:', e);
     showAuth();
   }
 }
@@ -600,7 +618,10 @@ function showAuth() {
   document.getElementById('app').style.display = 'none';
 }
 
+let appShown = false;
 async function showApp(user) {
+  if (appShown) return;
+  appShown = true;
   currentUser = user;
   document.getElementById('loading-screen').style.display = 'none';
   document.getElementById('auth-screen').style.display = 'none';
@@ -634,6 +655,7 @@ async function signInWithGoogle() {
 }
 
 async function signOut() {
+  appShown = false;
   if (supabaseClient) await supabaseClient.auth.signOut();
   state = {}; showAuth();
 }
