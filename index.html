@@ -76,6 +76,8 @@ body { font-family: var(--font-sans); background: var(--bg); color: var(--text);
 .btn:hover { background:var(--bg3); color:var(--text); border-color:var(--blue); }
 .btn-danger:hover { border-color:var(--red); color:var(--red); }
 .btn svg { width:13px; height:13px; }
+.btn-primary { background:var(--blue); color:#fff; border-color:var(--blue); }
+.btn-primary:hover { background:#2563eb; border-color:#2563eb; color:#fff; }
 
 /* STATS */
 .stats { display:grid; grid-template-columns:repeat(4,1fr); gap:10px; margin-bottom:1.25rem; }
@@ -154,6 +156,58 @@ body { font-family: var(--font-sans); background: var(--bg); color: var(--text);
 .spinner { width:32px; height:32px; border:2px solid var(--border); border-top-color:var(--blue); border-radius:50%; animation:spin .7s linear infinite; }
 @keyframes spin { to{transform:rotate(360deg)} }
 
+/* ── SHUFFLE MODAL ───────────────────────────────────── */
+.modal-backdrop { display:none; position:fixed; inset:0; background:rgba(0,0,0,.75); z-index:100; align-items:center; justify-content:center; padding:1rem; }
+.modal-backdrop.open { display:flex; }
+.modal { background:var(--bg2); border:1px solid var(--border2); border-radius:var(--rl); width:100%; max-width:520px; overflow:hidden; }
+.modal-hdr { padding:1.25rem 1.5rem; border-bottom:1px solid var(--border); display:flex; align-items:center; justify-content:space-between; }
+.modal-hdr h3 { font-size:15px; font-weight:600; }
+.modal-close { background:transparent; border:none; color:var(--text3); cursor:pointer; font-size:20px; line-height:1; padding:2px 6px; border-radius:4px; }
+.modal-close:hover { color:var(--text); background:var(--bg3); }
+.modal-body { padding:1.25rem 1.5rem; }
+.modal-section-label { font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:.07em; color:var(--text3); margin-bottom:8px; }
+.topic-checks { display:flex; flex-direction:column; gap:6px; margin-bottom:1.25rem; }
+.topic-check { display:flex; align-items:center; gap:10px; padding:9px 12px; border-radius:var(--r); border:1px solid var(--border); background:var(--bg); cursor:pointer; transition:all .15s; user-select:none; }
+.topic-check:hover { border-color:var(--border2); background:var(--bg3); }
+.topic-check.selected { border-color:var(--blue); background:rgba(59,130,246,.08); }
+.topic-check input { display:none; }
+.topic-check-dot { width:9px; height:9px; border-radius:50%; flex-shrink:0; }
+.topic-check-name { font-size:13px; font-weight:500; flex:1; }
+.topic-check-count { font-size:11px; color:var(--text3); font-family:var(--font-mono); }
+.count-row { display:flex; gap:8px; margin-bottom:1.25rem; }
+.count-btn { flex:1; padding:9px; border-radius:var(--r); border:1px solid var(--border); background:var(--bg); color:var(--text2); font-size:13px; font-weight:500; cursor:pointer; text-align:center; transition:all .15s; font-family:var(--font-sans); }
+.count-btn:hover { border-color:var(--border2); color:var(--text); }
+.count-btn.selected { border-color:var(--blue); background:rgba(59,130,246,.1); color:var(--blue); }
+.status-checks { display:flex; gap:8px; margin-bottom:1.5rem; }
+.status-check { flex:1; padding:8px; border-radius:var(--r); border:1px solid var(--border); background:var(--bg); font-size:12px; font-weight:500; cursor:pointer; text-align:center; transition:all .15s; color:var(--text2); font-family:var(--font-sans); }
+.status-check:hover { border-color:var(--border2); }
+.status-check.selected { border-color:var(--blue); background:rgba(59,130,246,.1); color:var(--blue); }
+.modal-ftr { padding:1rem 1.5rem; border-top:1px solid var(--border); display:flex; justify-content:flex-end; gap:8px; }
+
+/* ── QUIZ VIEW ───────────────────────────────────────── */
+#quiz-view { display:none; position:fixed; inset:0; background:var(--bg); z-index:200; overflow-y:auto; }
+.quiz-wrap { max-width:680px; margin:0 auto; padding:2rem 1.5rem; }
+.quiz-topbar { display:flex; align-items:center; justify-content:space-between; margin-bottom:1.75rem; }
+.quiz-topbar h2 { font-size:1.1rem; font-weight:600; }
+.quiz-progress { font-size:12px; color:var(--text2); font-family:var(--font-mono); }
+.quiz-prog-track { height:4px; background:var(--border); border-radius:2px; margin-bottom:2rem; overflow:hidden; }
+.quiz-prog-fill { height:4px; background:var(--blue); border-radius:2px; transition:width .3s; }
+.quiz-card { background:var(--bg2); border:1px solid var(--border); border-radius:var(--rl); padding:1.5rem; margin-bottom:1rem; }
+.quiz-card-num { font-size:11px; color:var(--text3); font-family:var(--font-mono); margin-bottom:8px; text-transform:uppercase; letter-spacing:.06em; }
+.quiz-card-name { font-size:16px; font-weight:600; margin-bottom:12px; line-height:1.4; }
+.quiz-card-meta { display:flex; gap:6px; flex-wrap:wrap; margin-bottom:16px; }
+.quiz-card-actions { display:flex; gap:8px; flex-wrap:wrap; }
+.quiz-action { padding:8px 16px; border-radius:var(--r); border:1px solid; font-size:12px; font-weight:600; cursor:pointer; font-family:var(--font-sans); transition:all .15s; }
+.qa-done   { background:rgba(34,197,94,.12);  color:var(--green); border-color:rgba(34,197,94,.4); }
+.qa-done:hover   { background:rgba(34,197,94,.22); }
+.qa-revise { background:rgba(245,158,11,.12); color:var(--amber); border-color:rgba(245,158,11,.4); }
+.qa-revise:hover { background:rgba(245,158,11,.22); }
+.qa-skip   { background:transparent; color:var(--text3); border-color:var(--border2); }
+.qa-skip:hover   { color:var(--text); border-color:var(--border2); background:var(--bg3); }
+.quiz-att-row { display:flex; align-items:center; gap:6px; margin-left:auto; }
+.quiz-reshuffle { display:flex; align-items:center; justify-content:center; gap:8px; padding:1.25rem; background:var(--bg2); border:1px solid var(--border); border-radius:var(--rl); color:var(--text2); font-size:13px; cursor:pointer; width:100%; transition:all .15s; font-family:var(--font-sans); border-style:dashed; }
+.quiz-reshuffle:hover { color:var(--text); border-color:var(--blue); background:var(--bg3); }
+
 @media(max-width:640px){
   .stats{grid-template-columns:repeat(2,1fr)}
   .prob-tags{display:none}
@@ -214,6 +268,10 @@ body { font-family: var(--font-sans); background: var(--bg); color: var(--text);
         <div class="user-avatar-placeholder" id="user-avatar">?</div>
         <span id="user-name">—</span>
       </div>
+      <button class="btn" onclick="openShuffle()">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M11 3h4v4M5 11H1V7M1 3l4.5 4.5M15 3l-4.5 4.5M1 13l4.5-4.5M15 13l-4.5-4.5"/></svg>
+        Shuffle Quiz
+      </button>
       <button class="btn btn-danger" onclick="signOut()">
         <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M6 2H3a1 1 0 00-1 1v10a1 1 0 001 1h3M10 11l3-3-3-3M13 8H6"/></svg>
         Sign out
@@ -251,6 +309,59 @@ body { font-family: var(--font-sans); background: var(--bg); color: var(--text);
 
   <div class="chip-bar" id="chip-bar"></div>
   <div id="container"></div>
+</div>
+
+<!-- SHUFFLE MODAL -->
+<div class="modal-backdrop" id="shuffle-modal">
+  <div class="modal">
+    <div class="modal-hdr">
+      <h3>🎲 Shuffle Quiz</h3>
+      <button class="modal-close" onclick="closeShuffle()">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="modal-section-label">Pick topics</div>
+      <div class="topic-checks" id="shuffle-topics"></div>
+
+      <div class="modal-section-label">How many problems?</div>
+      <div class="count-row">
+        <button class="count-btn selected" data-count="5"  onclick="selectCount(5)">5</button>
+        <button class="count-btn"          data-count="10" onclick="selectCount(10)">10</button>
+        <button class="count-btn"          data-count="15" onclick="selectCount(15)">15</button>
+        <button class="count-btn"          data-count="20" onclick="selectCount(20)">20</button>
+      </div>
+
+      <div class="modal-section-label">Include problems that are…</div>
+      <div class="status-checks">
+        <button class="status-check selected" data-s="all"          onclick="selectStatus('all')">All</button>
+        <button class="status-check"          data-s="not-started"  onclick="selectStatus('not-started')">Not started</button>
+        <button class="status-check"          data-s="done"         onclick="selectStatus('done')">Done</button>
+        <button class="status-check"          data-s="revise"       onclick="selectStatus('revise')">To revise</button>
+      </div>
+    </div>
+    <div class="modal-ftr">
+      <button class="btn" onclick="closeShuffle()">Cancel</button>
+      <button class="btn btn-primary" onclick="startQuiz()">Start →</button>
+    </div>
+  </div>
+</div>
+
+<!-- QUIZ VIEW -->
+<div id="quiz-view">
+  <div class="quiz-wrap">
+    <div class="quiz-topbar">
+      <h2>🎲 Shuffle Quiz</h2>
+      <div style="display:flex;gap:8px;align-items:center">
+        <span class="quiz-progress" id="quiz-progress">0 / 0</span>
+        <button class="btn" onclick="closeQuiz()">← Back</button>
+      </div>
+    </div>
+    <div class="quiz-prog-track"><div class="quiz-prog-fill" id="quiz-prog-fill" style="width:0%"></div></div>
+    <div id="quiz-cards"></div>
+    <button class="quiz-reshuffle" onclick="openShuffle(); closeQuiz()">
+      <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M11 3h4v4M5 11H1V7M1 3l4.5 4.5M15 3l-4.5 4.5M1 13l4.5-4.5M15 13l-4.5-4.5"/></svg>
+      New shuffle
+    </button>
+  </div>
 </div>
 
 <div id="toast"></div>
@@ -785,9 +896,163 @@ document.getElementById('f-status').addEventListener('change', render);
 document.getElementById('f-diff').addEventListener('change', render);
 
 /* ══════════════════════════════════════════════════════════════
-   BOOT
+   SHUFFLE QUIZ
    ══════════════════════════════════════════════════════════════ */
-init();
+let quizCount = 5;
+let quizStatus = 'all';
+let selectedTopics = new Set(TOPICS.map((_, i) => i)); // all selected by default
+
+function openShuffle() {
+  // Build topic checkboxes
+  document.getElementById('shuffle-topics').innerHTML = TOPICS.map((t, ti) => {
+    const total = IDX.filter(e => e.ti === ti).length;
+    const sel = selectedTopics.has(ti);
+    return `<label class="topic-check ${sel ? 'selected' : ''}" data-ti="${ti}">
+      <input type="checkbox" ${sel ? 'checked' : ''}>
+      <div class="topic-check-dot" style="background:${t.color}"></div>
+      <span class="topic-check-name">${t.name}</span>
+      <span class="topic-check-count">${total} problems</span>
+    </label>`;
+  }).join('');
+  document.getElementById('shuffle-modal').classList.add('open');
+}
+
+function closeShuffle() {
+  document.getElementById('shuffle-modal').classList.remove('open');
+}
+
+function selectCount(n) {
+  quizCount = n;
+  document.querySelectorAll('.count-btn').forEach(b => {
+    b.classList.toggle('selected', +b.dataset.count === n);
+  });
+}
+
+function selectStatus(s) {
+  quizStatus = s;
+  document.querySelectorAll('.status-check').forEach(b => {
+    b.classList.toggle('selected', b.dataset.s === s);
+  });
+}
+
+document.addEventListener('change', e => {
+  const lbl = e.target.closest('.topic-check');
+  if (!lbl) return;
+  const ti = +lbl.dataset.ti;
+  if (e.target.checked) { selectedTopics.add(ti); lbl.classList.add('selected'); }
+  else { selectedTopics.delete(ti); lbl.classList.remove('selected'); }
+});
+
+function startQuiz() {
+  if (selectedTopics.size === 0) { toast('Pick at least one topic!'); return; }
+
+  // Pool: filter by selected topics and status
+  let pool = IDX.filter(e => {
+    if (!selectedTopics.has(e.ti)) return false;
+    if (quizStatus === 'all') return true;
+    return getP(e.id).status === quizStatus;
+  });
+
+  if (pool.length === 0) { toast('No problems match — try different filters.'); return; }
+
+  // Shuffle (Fisher-Yates)
+  for (let i = pool.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [pool[i], pool[j]] = [pool[j], pool[i]];
+  }
+  const chosen = pool.slice(0, quizCount);
+
+  closeShuffle();
+  renderQuiz(chosen);
+}
+
+function renderQuiz(problems) {
+  const total = problems.length;
+  document.getElementById('quiz-progress').textContent = `${total} problems`;
+  document.getElementById('quiz-prog-fill').style.width = '0%';
+
+  const cards = problems.map((prob, idx) => {
+    const p = getP(prob.id);
+    const pillClass = { 'not-started': 'pill-ns', 'done': 'pill-done', 'revise': 'pill-revise' }[p.status];
+    const pillText  = { 'not-started': 'Not started', 'done': 'Done ✓', 'revise': 'To revise' }[p.status];
+    const topic = TOPICS[prob.ti];
+    const dc = DIFF_MAP[prob.difficulty];
+    const tags = `<span class="ptag" style="background:${dc.bg};color:${dc.c};border-color:${dc.b}">${prob.difficulty}</span>` +
+      `<span class="ptag" style="background:rgba(59,130,246,.12);color:#93c5fd;border-color:rgba(59,130,246,.3)">${topic.name}</span>` +
+      prob.patterns.map(pt => { const c = PAT_MAP[pt] || PAT_COLORS[0]; return `<span class="ptag" style="background:${c.bg};color:${c.c};border-color:${c.b}">${pt}</span>`; }).join('');
+
+    return `<div class="quiz-card" id="qcard-${prob.id}">
+      <div class="quiz-card-num">Problem ${idx + 1} of ${total}</div>
+      <div class="quiz-card-name">${prob.name}</div>
+      <div class="quiz-card-meta">${tags}</div>
+      <div class="quiz-card-actions">
+        <button class="quiz-action qa-done"   onclick="quizMark(${prob.id},'done')">Done ✓</button>
+        <button class="quiz-action qa-revise" onclick="quizMark(${prob.id},'revise')">To revise</button>
+        <button class="quiz-action qa-skip"   onclick="quizSkip(${prob.id})">Skip</button>
+        <div class="quiz-att-row attempts" style="margin-left:auto">
+          <button class="att-btn" onclick="changeAtt(${prob.id},-1);updateQuizAtt(${prob.id})">−</button>
+          <span class="att-count" id="qatt-${prob.id}">${p.attempts || 0}</span>
+          <button class="att-btn" onclick="changeAtt(${prob.id},1);updateQuizAtt(${prob.id})">+</button>
+        </div>
+        <span style="font-size:11px;color:var(--text3);align-self:center;font-family:var(--font-mono)">${p.attempts||0} attempt${(p.attempts||0)!==1?'s':''}</span>
+      </div>
+    </div>`;
+  }).join('');
+
+  document.getElementById('quiz-cards').innerHTML = cards;
+  document.getElementById('quiz-view').style.display = 'block';
+  document.getElementById('quiz-view').scrollTop = 0;
+  updateQuizProgress(problems);
+}
+
+function updateQuizAtt(id) {
+  const el = document.getElementById('qatt-' + id);
+  if (el) el.textContent = getP(id).attempts || 0;
+}
+
+function quizMark(id, status) {
+  if (!state[id]) state[id] = { status: 'not-started', attempts: 0, last_solved: null };
+  state[id].status = status;
+  if (!state[id].attempts) state[id].attempts = 1;
+  state[id].last_solved = today();
+  scheduleSave(id);
+  // Animate card out
+  const card = document.getElementById('qcard-' + id);
+  if (card) {
+    card.style.transition = 'opacity .3s, transform .3s';
+    card.style.opacity = '0';
+    card.style.transform = 'translateX(40px)';
+    setTimeout(() => { card.style.display = 'none'; checkQuizDone(); }, 300);
+  }
+}
+
+function quizSkip(id) {
+  const card = document.getElementById('qcard-' + id);
+  if (card) {
+    card.style.transition = 'opacity .3s';
+    card.style.opacity = '0.3';
+    setTimeout(() => { card.style.opacity = '1'; }, 600);
+  }
+}
+
+function checkQuizDone() {
+  const remaining = document.querySelectorAll('.quiz-card:not([style*="display: none"])').length;
+  const total = document.querySelectorAll('.quiz-card').length;
+  const done = total - remaining;
+  document.getElementById('quiz-progress').textContent = `${done} / ${total} done`;
+  document.getElementById('quiz-prog-fill').style.width = (done / total * 100) + '%';
+}
+
+function updateQuizProgress(problems) {
+  checkQuizDone();
+}
+
+function closeQuiz() {
+  document.getElementById('quiz-view').style.display = 'none';
+  render(); // refresh main tracker with any status updates
+}
+
+
 </script>
 </body>
 </html>
