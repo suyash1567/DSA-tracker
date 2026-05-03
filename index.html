@@ -1,0 +1,793 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DSA Tracker — Striver A2Z</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --bg:      #0f1117; --bg2: #161b27; --bg3: #1e2535;
+  --border:  #2a3347; --border2: #3a4a63;
+  --text:    #e2e8f0; --text2: #8b9ab5; --text3: #4e607a;
+  --blue:    #3b82f6; --green: #22c55e; --amber: #f59e0b;
+  --red:     #ef4444; --teal: #14b8a6;
+  --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
+  --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  --r: 8px; --rl: 12px;
+}
+body { font-family: var(--font-sans); background: var(--bg); color: var(--text); min-height: 100vh; font-size: 14px; }
+
+/* ── AUTH SCREEN ─────────────────────────────────────── */
+#auth-screen {
+  display: flex; align-items: center; justify-content: center;
+  min-height: 100vh; padding: 2rem;
+}
+.auth-card {
+  background: var(--bg2); border: 1px solid var(--border2);
+  border-radius: var(--rl); padding: 2.5rem 2rem; width: 100%; max-width: 380px;
+  text-align: center;
+}
+.auth-card h1 { font-size: 1.6rem; font-weight: 700; margin-bottom: 6px; }
+.auth-card h1 span { color: var(--blue); }
+.auth-card p { font-size: 13px; color: var(--text2); margin-bottom: 2rem; }
+.auth-features { text-align: left; margin-bottom: 2rem; display: flex; flex-direction: column; gap: 10px; }
+.auth-feat { display: flex; align-items: flex-start; gap: 10px; font-size: 13px; color: var(--text2); }
+.auth-feat-icon { font-size: 16px; flex-shrink: 0; margin-top: 1px; }
+.auth-feat strong { color: var(--text); display: block; font-size: 13px; }
+.google-btn {
+  width: 100%; padding: 11px; border-radius: var(--r); border: 1px solid var(--border2);
+  background: var(--bg3); color: var(--text); font-size: 14px; font-weight: 500;
+  cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px;
+  transition: all .15s; font-family: var(--font-sans);
+}
+.google-btn:hover { background: var(--border); border-color: var(--blue); }
+.google-btn svg { width: 18px; height: 18px; flex-shrink: 0; }
+.auth-note { font-size: 11px; color: var(--text3); margin-top: 1rem; }
+
+/* ── CONFIG BANNER ───────────────────────────────────── */
+#config-banner {
+  background: rgba(239,68,68,.1); border: 1px solid rgba(239,68,68,.3);
+  border-radius: var(--r); padding: 12px 16px; margin-bottom: 1.25rem;
+  font-size: 13px; color: #fca5a5; display: none;
+}
+#config-banner code { background: rgba(239,68,68,.2); padding: 2px 6px; border-radius: 4px; font-family: var(--font-mono); font-size: 12px; }
+
+/* ── APP ─────────────────────────────────────────────── */
+#app { display: none; max-width: 1000px; margin: 0 auto; padding: 1.75rem 1.5rem 3rem; }
+
+/* TOPBAR */
+.topbar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.75rem; flex-wrap: wrap; gap: 1rem; }
+.topbar-left h1 { font-size: 1.4rem; font-weight: 700; letter-spacing: -.02em; }
+.topbar-left h1 span { color: var(--blue); }
+.topbar-left p { font-size: 12px; color: var(--text2); margin-top: 3px; }
+.topbar-right { display: flex; align-items: center; gap: 8px; }
+.user-pill { display: flex; align-items: center; gap: 7px; padding: 5px 10px; background: var(--bg2); border: 1px solid var(--border); border-radius: 100px; font-size: 12px; color: var(--text2); }
+.user-avatar { width: 22px; height: 22px; border-radius: 50%; object-fit: cover; }
+.user-avatar-placeholder { width: 22px; height: 22px; border-radius: 50%; background: var(--blue); display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; color: #fff; }
+.sync-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--green); flex-shrink: 0; }
+.sync-dot.syncing { background: var(--amber); animation: pulse 1s infinite; }
+.sync-dot.error { background: var(--red); }
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
+
+/* BUTTONS */
+.btn { display:inline-flex; align-items:center; gap:6px; padding:7px 13px; border-radius:var(--r); font-size:12px; font-weight:500; cursor:pointer; border:1px solid var(--border2); background:var(--bg2); color:var(--text2); transition:all .15s; font-family:var(--font-sans); }
+.btn:hover { background:var(--bg3); color:var(--text); border-color:var(--blue); }
+.btn-danger:hover { border-color:var(--red); color:var(--red); }
+.btn svg { width:13px; height:13px; }
+
+/* STATS */
+.stats { display:grid; grid-template-columns:repeat(4,1fr); gap:10px; margin-bottom:1.25rem; }
+.stat { background:var(--bg2); border:1px solid var(--border); border-radius:var(--rl); padding:14px 16px; }
+.stat-label { font-size:10px; color:var(--text3); text-transform:uppercase; letter-spacing:.07em; margin-bottom:5px; }
+.stat-value { font-size:26px; font-weight:700; font-family:var(--font-mono); }
+.stat-value.green{color:var(--green)} .stat-value.amber{color:var(--amber)} .stat-value.dim{color:var(--text2)}
+
+/* PROGRESS */
+.prog-wrap { margin-bottom:1.5rem; }
+.prog-top { display:flex; justify-content:space-between; font-size:11px; color:var(--text3); margin-bottom:6px; }
+.prog-track { height:6px; background:var(--border); border-radius:3px; overflow:hidden; }
+.prog-fill { height:6px; border-radius:3px; transition:width .4s; background:linear-gradient(90deg,var(--blue),var(--teal),var(--amber)); }
+
+/* TOOLBAR */
+.toolbar { display:flex; gap:8px; margin-bottom:1rem; flex-wrap:wrap; }
+.toolbar input[type=text] { flex:1; min-width:180px; height:36px; padding:0 12px; background:var(--bg2); border:1px solid var(--border); border-radius:var(--r); color:var(--text); font-size:13px; font-family:var(--font-sans); outline:none; }
+.toolbar input[type=text]:focus { border-color:var(--blue); }
+.toolbar input[type=text]::placeholder { color:var(--text3); }
+.toolbar select { height:36px; padding:0 10px; background:var(--bg2); border:1px solid var(--border); border-radius:var(--r); color:var(--text2); font-size:13px; font-family:var(--font-sans); cursor:pointer; outline:none; }
+.toolbar select:focus { border-color:var(--blue); }
+
+/* PATTERN CHIPS */
+.chip-bar { display:flex; gap:6px; flex-wrap:wrap; margin-bottom:1.25rem; }
+.chip { padding:4px 10px; border-radius:100px; font-size:11px; font-weight:500; border:1px solid var(--border); background:var(--bg2); color:var(--text2); cursor:pointer; transition:all .15s; white-space:nowrap; font-family:var(--font-sans); }
+.chip:hover { border-color:var(--blue); color:var(--text); }
+.chip.active { background:var(--blue); border-color:var(--blue); color:#fff; }
+
+/* TOPIC CARD */
+.topic-card { border:1px solid var(--border); border-radius:var(--rl); overflow:hidden; margin-bottom:12px; }
+.topic-hdr { display:flex; align-items:center; justify-content:space-between; padding:13px 18px; cursor:pointer; background:var(--bg2); user-select:none; transition:background .15s; }
+.topic-hdr:hover { background:var(--bg3); }
+.topic-left { display:flex; align-items:center; gap:12px; }
+.topic-dot { width:10px; height:10px; border-radius:50%; flex-shrink:0; }
+.topic-name { font-size:14px; font-weight:600; }
+.topic-meta { font-size:12px; color:var(--text2); }
+.topic-chevron { color:var(--text3); transition:transform .2s; flex-shrink:0; }
+.topic-chevron.open { transform:rotate(180deg); }
+.topic-pbar { height:2px; background:var(--border); }
+.topic-pfill { height:2px; transition:width .3s; }
+.topic-body { display:none; }
+.topic-body.open { display:block; }
+
+/* SECTION */
+.sec-label { padding:7px 18px; font-size:10px; font-weight:600; letter-spacing:.08em; text-transform:uppercase; color:var(--text3); background:var(--bg); border-bottom:1px solid var(--border); border-top:1px solid var(--border); }
+
+/* PROBLEM ROW */
+.prob-row { display:flex; align-items:center; gap:10px; padding:10px 18px; border-bottom:1px solid var(--border); background:var(--bg2); transition:background .1s; }
+.prob-row:last-child { border-bottom:none; }
+.prob-row:hover { background:var(--bg3); }
+.prob-name { flex:1; font-size:13px; color:var(--text); font-family:var(--font-mono); min-width:0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.prob-tags { display:flex; gap:4px; flex-shrink:0; flex-wrap:wrap; max-width:240px; }
+.ptag { font-size:10px; padding:2px 7px; border-radius:100px; font-weight:500; white-space:nowrap; border:1px solid; }
+
+/* STATUS PILL */
+.status-pill { font-size:11px; font-weight:600; padding:4px 12px; border-radius:100px; border:1px solid; cursor:pointer; white-space:nowrap; min-width:96px; text-align:center; font-family:var(--font-sans); transition:all .15s; }
+.pill-ns { background:transparent; color:var(--text3); border-color:var(--border2); }
+.pill-ns:hover { border-color:var(--green); color:var(--green); }
+.pill-done { background:rgba(34,197,94,.12); color:var(--green); border-color:rgba(34,197,94,.4); }
+.pill-revise { background:rgba(245,158,11,.12); color:var(--amber); border-color:rgba(245,158,11,.4); }
+
+/* ATTEMPTS */
+.attempts { display:flex; align-items:center; gap:5px; flex-shrink:0; }
+.att-btn { width:22px; height:22px; border-radius:5px; border:1px solid var(--border2); background:transparent; cursor:pointer; font-size:14px; color:var(--text2); display:flex; align-items:center; justify-content:center; transition:all .15s; font-family:var(--font-sans); }
+.att-btn:hover { background:var(--bg3); color:var(--text); border-color:var(--blue); }
+.att-count { font-size:12px; font-weight:600; color:var(--text); min-width:20px; text-align:center; font-family:var(--font-mono); }
+.last-date { font-size:11px; color:var(--text3); min-width:55px; text-align:right; font-family:var(--font-mono); }
+
+/* MISC */
+.empty { text-align:center; padding:2.5rem; font-size:13px; color:var(--text3); }
+#toast { position:fixed; bottom:24px; right:24px; padding:10px 18px; background:var(--bg3); border:1px solid var(--border2); border-radius:var(--r); font-size:13px; color:var(--text); opacity:0; transform:translateY(8px); transition:all .25s; pointer-events:none; z-index:999; }
+#toast.show { opacity:1; transform:translateY(0); }
+
+/* LOADING */
+.loading-screen { display:flex; align-items:center; justify-content:center; min-height:100vh; flex-direction:column; gap:12px; }
+.spinner { width:32px; height:32px; border:2px solid var(--border); border-top-color:var(--blue); border-radius:50%; animation:spin .7s linear infinite; }
+@keyframes spin { to{transform:rotate(360deg)} }
+
+@media(max-width:640px){
+  .stats{grid-template-columns:repeat(2,1fr)}
+  .prob-tags{display:none}
+  .last-date{display:none}
+  #app{padding:1rem}
+}
+</style>
+</head>
+<body>
+
+<!-- LOADING -->
+<div class="loading-screen" id="loading-screen">
+  <div class="spinner"></div>
+  <span style="font-size:13px;color:var(--text2)">Loading…</span>
+</div>
+
+<!-- AUTH SCREEN -->
+<div id="auth-screen" style="display:none">
+  <div class="auth-card">
+    <h1>DSA <span>Tracker</span></h1>
+    <p>Striver A2Z · Your progress, everywhere.</p>
+    <div class="auth-features">
+      <div class="auth-feat">
+        <span class="auth-feat-icon">☁️</span>
+        <div><strong>Syncs across all your devices</strong>Phone, laptop, anywhere — always up to date.</div>
+      </div>
+      <div class="auth-feat">
+        <span class="auth-feat-icon">🔁</span>
+        <div><strong>Spaced repetition tracking</strong>Track attempts, mark for revision, filter by pattern.</div>
+      </div>
+      <div class="auth-feat">
+        <span class="auth-feat-icon">🧩</span>
+        <div><strong>Pattern-based revision</strong>Filter problems by technique — Binary Search on Answer, DFS, LCA and more.</div>
+      </div>
+    </div>
+    <button class="google-btn" onclick="signInWithGoogle()">
+      <svg viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
+      Continue with Google
+    </button>
+    <p class="auth-note">Your progress is private and only visible to you.</p>
+  </div>
+</div>
+
+<!-- MAIN APP -->
+<div id="app">
+  <div id="config-banner">
+    ⚠️ Supabase not configured. Open <code>index.html</code> and set <code>SUPABASE_URL</code> and <code>SUPABASE_ANON_KEY</code> at the top of the script. See <code>SETUP.md</code>.
+  </div>
+
+  <div class="topbar">
+    <div class="topbar-left">
+      <h1>DSA <span>Tracker</span></h1>
+      <p id="topic-subtitle">Striver A2Z</p>
+    </div>
+    <div class="topbar-right">
+      <div class="user-pill">
+        <div class="sync-dot" id="sync-dot" title="Synced"></div>
+        <div class="user-avatar-placeholder" id="user-avatar">?</div>
+        <span id="user-name">—</span>
+      </div>
+      <button class="btn btn-danger" onclick="signOut()">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M6 2H3a1 1 0 00-1 1v10a1 1 0 001 1h3M10 11l3-3-3-3M13 8H6"/></svg>
+        Sign out
+      </button>
+    </div>
+  </div>
+
+  <div class="stats">
+    <div class="stat"><div class="stat-label">Total</div><div class="stat-value dim" id="s-total">—</div></div>
+    <div class="stat"><div class="stat-label">Solved</div><div class="stat-value green" id="s-done">—</div></div>
+    <div class="stat"><div class="stat-label">To Revise</div><div class="stat-value amber" id="s-revise">—</div></div>
+    <div class="stat"><div class="stat-label">Not Started</div><div class="stat-value dim" id="s-ns">—</div></div>
+  </div>
+
+  <div class="prog-wrap">
+    <div class="prog-top"><span>Overall progress</span><span id="pct-label">0%</span></div>
+    <div class="prog-track"><div class="prog-fill" id="overall-fill" style="width:0%"></div></div>
+  </div>
+
+  <div class="toolbar">
+    <input type="text" id="search" placeholder="Search problems or patterns…">
+    <select id="f-status">
+      <option value="all">All statuses</option>
+      <option value="not-started">Not started</option>
+      <option value="done">Done</option>
+      <option value="revise">To revise</option>
+    </select>
+    <select id="f-diff">
+      <option value="all">All difficulties</option>
+      <option value="Easy">Easy</option>
+      <option value="Medium">Medium</option>
+      <option value="Hard">Hard</option>
+    </select>
+  </div>
+
+  <div class="chip-bar" id="chip-bar"></div>
+  <div id="container"></div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+/* ══════════════════════════════════════════════════════════════
+   ⚙️  CONFIG — paste your Supabase values here
+   ══════════════════════════════════════════════════════════════ */
+const SUPABASE_URL      = 'https://rcmgnfynhfjmblgkkmuv.supabase.co/rest/v1/';      // e.g. https://xyzabc.supabase.co
+const SUPABASE_ANON_KEY = 'sb_publishable_lTI9QUEpONZikR4ofRHkLQ_LGjGtz4R'; // long JWT string
+
+/* ══════════════════════════════════════════════════════════════
+   📚  DATA
+   ══════════════════════════════════════════════════════════════
+   HOW TO ADD MORE TOPICS (just tell me which topics to add and
+   paste this file — I'll return an updated TOPICS array):
+
+   Each topic:
+   {
+     name: string,
+     color: hex string,
+     sections: [
+       {
+         name: string,
+         problems: [
+           {
+             name: string,
+             difficulty: "Easy" | "Medium" | "Hard",
+             patterns: string[]   ← drives the filter chips
+           }
+         ]
+       }
+     ]
+   }
+   ══════════════════════════════════════════════════════════════ */
+const TOPICS = [
+  /* ── BINARY SEARCH ──────────────────────────────────────── */
+  {
+    name: "Binary Search", color: "#3b82f6",
+    sections: [
+      { name: "BS on 1D Arrays", problems: [
+        { name: "Binary Search to find X in sorted array",       difficulty: "Easy",   patterns: ["Binary Search"] },
+        { name: "Implement Lower Bound",                          difficulty: "Easy",   patterns: ["Binary Search"] },
+        { name: "Implement Upper Bound",                          difficulty: "Easy",   patterns: ["Binary Search"] },
+        { name: "Search Insert Position",                         difficulty: "Easy",   patterns: ["Binary Search"] },
+        { name: "Floor and Ceil in Sorted Array",                 difficulty: "Easy",   patterns: ["Binary Search"] },
+        { name: "First and Last Occurrence of X",                 difficulty: "Easy",   patterns: ["Binary Search"] },
+        { name: "Count occurrences of X in sorted array",         difficulty: "Easy",   patterns: ["Binary Search"] },
+        { name: "Search in Rotated Sorted Array I",               difficulty: "Medium", patterns: ["Binary Search", "Modified BS"] },
+        { name: "Search in Rotated Sorted Array II",              difficulty: "Medium", patterns: ["Binary Search", "Modified BS"] },
+        { name: "Find minimum in Rotated Sorted Array",           difficulty: "Medium", patterns: ["Binary Search", "Modified BS"] },
+        { name: "Find how many times array has been rotated",     difficulty: "Easy",   patterns: ["Binary Search", "Modified BS"] },
+        { name: "Single element in a Sorted Array",               difficulty: "Medium", patterns: ["Binary Search"] },
+        { name: "Find Peak Element",                              difficulty: "Medium", patterns: ["Binary Search"] },
+      ]},
+      { name: "BS on Answers", problems: [
+        { name: "Find Square Root of a number in log n",          difficulty: "Easy",   patterns: ["BS on Answer"] },
+        { name: "Find Nth Root of a Number",                      difficulty: "Easy",   patterns: ["BS on Answer"] },
+        { name: "Koko Eating Bananas",                            difficulty: "Medium", patterns: ["BS on Answer"] },
+        { name: "Minimum days to make M bouquets",                difficulty: "Medium", patterns: ["BS on Answer"] },
+        { name: "Find the Smallest Divisor Given a Threshold",    difficulty: "Medium", patterns: ["BS on Answer"] },
+        { name: "Capacity To Ship Packages Within D Days",        difficulty: "Medium", patterns: ["BS on Answer"] },
+        { name: "Kth Missing Positive Number",                    difficulty: "Easy",   patterns: ["BS on Answer"] },
+        { name: "Aggressive Cows",                                difficulty: "Hard",   patterns: ["BS on Answer"] },
+        { name: "Book Allocation Problem",                        difficulty: "Hard",   patterns: ["BS on Answer"] },
+        { name: "Split Array — Largest Sum",                      difficulty: "Hard",   patterns: ["BS on Answer"] },
+        { name: "Painter's Partition Problem",                    difficulty: "Hard",   patterns: ["BS on Answer"] },
+        { name: "Minimize Max Distance to Gas Stations",          difficulty: "Hard",   patterns: ["BS on Answer"] },
+        { name: "Median of 2 Sorted Arrays",                      difficulty: "Hard",   patterns: ["BS on Answer", "Two Pointers"] },
+        { name: "Kth Element of 2 Sorted Arrays",                 difficulty: "Hard",   patterns: ["BS on Answer", "Two Pointers"] },
+      ]},
+      { name: "BS on 2D Arrays", problems: [
+        { name: "Row with maximum number of 1s",                  difficulty: "Easy",   patterns: ["Binary Search", "2D Array"] },
+        { name: "Search in a 2D Matrix",                          difficulty: "Medium", patterns: ["Binary Search", "2D Array"] },
+        { name: "Search in Row and Column wise Sorted Matrix",     difficulty: "Medium", patterns: ["Binary Search", "Two Pointers", "2D Array"] },
+        { name: "Find Peak Element in 2D Matrix",                 difficulty: "Hard",   patterns: ["Binary Search", "2D Array"] },
+        { name: "Matrix Median",                                  difficulty: "Hard",   patterns: ["BS on Answer", "2D Array"] },
+      ]},
+    ]
+  },
+
+  /* ── BINARY TREES ───────────────────────────────────────── */
+  {
+    name: "Binary Trees", color: "#14b8a6",
+    sections: [
+      { name: "Traversals", problems: [
+        { name: "Binary Tree Representation",                     difficulty: "Easy",   patterns: ["Tree Traversal"] },
+        { name: "Preorder Inorder PostOrder Traversal",           difficulty: "Easy",   patterns: ["DFS", "Tree Traversal"] },
+        { name: "Level Order Traversal / BFS",                    difficulty: "Easy",   patterns: ["BFS", "Tree Traversal"] },
+        { name: "Iterative Preorder Traversal",                   difficulty: "Easy",   patterns: ["DFS", "Tree Traversal", "Stack"] },
+        { name: "Iterative Inorder Traversal",                    difficulty: "Easy",   patterns: ["DFS", "Tree Traversal", "Stack"] },
+        { name: "Postorder using 2 stacks",                       difficulty: "Medium", patterns: ["DFS", "Tree Traversal", "Stack"] },
+        { name: "Postorder using 1 stack",                        difficulty: "Hard",   patterns: ["DFS", "Tree Traversal", "Stack"] },
+        { name: "All Traversals in One Pass",                     difficulty: "Hard",   patterns: ["DFS", "Tree Traversal"] },
+      ]},
+      { name: "Medium Problems", problems: [
+        { name: "Height of a Binary Tree",                        difficulty: "Easy",   patterns: ["DFS", "Recursion"] },
+        { name: "Check if Binary Tree is Balanced",               difficulty: "Medium", patterns: ["DFS", "Recursion"] },
+        { name: "Diameter of Binary Tree",                        difficulty: "Easy",   patterns: ["DFS", "Recursion"] },
+        { name: "Maximum Path Sum",                               difficulty: "Hard",   patterns: ["DFS", "Recursion"] },
+        { name: "Check if two trees are identical",               difficulty: "Easy",   patterns: ["DFS", "Recursion"] },
+        { name: "Zigzag / Spiral Traversal",                      difficulty: "Medium", patterns: ["BFS", "Tree Traversal"] },
+        { name: "Boundary Traversal",                             difficulty: "Medium", patterns: ["DFS", "Tree Traversal"] },
+        { name: "Vertical Order Traversal",                       difficulty: "Hard",   patterns: ["BFS", "Sorting"] },
+        { name: "Top View of Binary Tree",                        difficulty: "Medium", patterns: ["BFS", "Hashing"] },
+        { name: "Bottom View of Binary Tree",                     difficulty: "Medium", patterns: ["BFS", "Hashing"] },
+        { name: "Right View of Binary Tree",                      difficulty: "Medium", patterns: ["BFS", "DFS"] },
+        { name: "Left View of Binary Tree",                       difficulty: "Medium", patterns: ["BFS", "DFS"] },
+        { name: "Symmetric Binary Tree",                          difficulty: "Easy",   patterns: ["DFS", "Recursion"] },
+        { name: "Print Root to Node Path",                        difficulty: "Medium", patterns: ["DFS", "Recursion"] },
+        { name: "Lowest Common Ancestor",                         difficulty: "Medium", patterns: ["DFS", "Recursion", "LCA"] },
+      ]},
+      { name: "Hard Problems", problems: [
+        { name: "Maximum Width of Binary Tree",                   difficulty: "Medium", patterns: ["BFS"] },
+        { name: "Children Sum Property",                          difficulty: "Medium", patterns: ["DFS", "Recursion"] },
+        { name: "All Nodes Distance K",                           difficulty: "Medium", patterns: ["BFS", "DFS", "Graph"] },
+        { name: "Minimum Time to Burn Binary Tree",               difficulty: "Hard",   patterns: ["BFS", "DFS", "Graph"] },
+        { name: "Count total Nodes in Complete Binary Tree",      difficulty: "Medium", patterns: ["Binary Search", "DFS"] },
+        { name: "Construct Tree from Inorder and Preorder",       difficulty: "Medium", patterns: ["DFS", "Divide & Conquer", "Hashing"] },
+        { name: "Construct Tree from Postorder and Inorder",      difficulty: "Medium", patterns: ["DFS", "Divide & Conquer", "Hashing"] },
+        { name: "Serialize and Deserialize Binary Tree",          difficulty: "Hard",   patterns: ["BFS", "DFS"] },
+        { name: "Morris Inorder Traversal",                       difficulty: "Medium", patterns: ["Morris Traversal"] },
+        { name: "Morris Preorder Traversal",                      difficulty: "Medium", patterns: ["Morris Traversal"] },
+        { name: "Flatten Binary Tree to Linked List",             difficulty: "Medium", patterns: ["DFS", "Morris Traversal"] },
+        { name: "Find Duplicate Subtrees",                        difficulty: "Medium", patterns: ["DFS", "Hashing", "Serialization"] },
+        { name: "Check Children Sum Property",                    difficulty: "Medium", patterns: ["DFS", "Recursion"] },
+        { name: "Binary Tree Cameras",                            difficulty: "Hard",   patterns: ["DFS", "Greedy"] },
+        { name: "Kth Ancestor of a Node",                         difficulty: "Medium", patterns: ["DFS", "Binary Lifting"] },
+        { name: "Requirements to Construct a Unique Binary Tree", difficulty: "Easy",   patterns: ["Tree Traversal"] },
+      ]},
+    ]
+  },
+
+  /* ── BINARY SEARCH TREES ────────────────────────────────── */
+  {
+    name: "Binary Search Trees", color: "#f59e0b",
+    sections: [
+      { name: "Concepts", problems: [
+        { name: "Introduction to BST",                            difficulty: "Easy",   patterns: ["BST"] },
+        { name: "Search in BST",                                  difficulty: "Easy",   patterns: ["BST", "Binary Search"] },
+        { name: "Find Min and Max in BST",                        difficulty: "Easy",   patterns: ["BST"] },
+        { name: "Ceil in BST",                                    difficulty: "Medium", patterns: ["BST", "Binary Search"] },
+        { name: "Floor in BST",                                   difficulty: "Medium", patterns: ["BST", "Binary Search"] },
+      ]},
+      { name: "Problems", problems: [
+        { name: "Insert a Node in BST",                           difficulty: "Medium", patterns: ["BST", "Recursion"] },
+        { name: "Delete a Node in BST",                           difficulty: "Medium", patterns: ["BST", "Recursion"] },
+        { name: "Kth Smallest Element in BST",                    difficulty: "Medium", patterns: ["BST", "DFS", "Inorder"] },
+        { name: "Kth Largest Element in BST",                     difficulty: "Medium", patterns: ["BST", "DFS", "Inorder"] },
+        { name: "Check if a tree is BST or not",                  difficulty: "Medium", patterns: ["BST", "DFS", "Inorder"] },
+        { name: "LCA in Binary Search Tree",                      difficulty: "Medium", patterns: ["BST", "LCA"] },
+        { name: "Construct BST from Preorder Traversal",          difficulty: "Medium", patterns: ["BST", "Divide & Conquer"] },
+        { name: "Inorder Successor and Predecessor in BST",       difficulty: "Medium", patterns: ["BST", "DFS"] },
+        { name: "BST Iterator",                                   difficulty: "Medium", patterns: ["BST", "Stack", "Inorder"] },
+        { name: "Two Sum in BST",                                 difficulty: "Medium", patterns: ["BST", "Two Pointers", "Hashing"] },
+        { name: "Recover BST — Two Nodes Swapped",               difficulty: "Hard",   patterns: ["BST", "Morris Traversal", "Inorder"] },
+        { name: "Largest BST in Binary Tree",                     difficulty: "Hard",   patterns: ["BST", "DFS", "Recursion"] },
+      ]},
+    ]
+  },
+
+  /* ── ADD MORE TOPICS BELOW ──────────────────────────────────
+     Just ask me: "add Graphs, DP, Arrays" and paste this file.
+     I'll return the updated TOPICS array. Your Supabase progress
+     is keyed by problem_id (the flat index position), so as long
+     as you only APPEND new topics at the bottom and never reorder
+     existing ones, all your saved progress carries over.
+     ─────────────────────────────────────────────────────────── */
+];
+
+/* ══════════════════════════════════════════════════════════════
+   FLAT INDEX — do not edit
+   ══════════════════════════════════════════════════════════════ */
+const IDX = [];
+TOPICS.forEach((t, ti) =>
+  t.sections.forEach((s, si) =>
+    s.problems.forEach((p, pi) =>
+      IDX.push({ id: IDX.length, ti, si, pi, ...p })
+    )
+  )
+);
+const TOTAL = IDX.length;
+const ALL_PATTERNS = [...new Set(IDX.flatMap(p => p.patterns))].sort();
+
+/* ══════════════════════════════════════════════════════════════
+   SUPABASE INIT
+   ══════════════════════════════════════════════════════════════ */
+let supabase = null;
+let currentUser = null;
+
+const CONFIGURED = SUPABASE_URL !== 'YOUR_SUPABASE_URL' && SUPABASE_ANON_KEY !== 'YOUR_SUPABASE_ANON_KEY';
+
+if (CONFIGURED) {
+  supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+}
+
+/* ══════════════════════════════════════════════════════════════
+   STATE
+   ══════════════════════════════════════════════════════════════ */
+let state = {};        // problem_id (int) -> { status, attempts, last_solved }
+let topicOpen = TOPICS.map((_, i) => i === 0);
+let activePattern = null;
+let syncQueue = {};    // pending writes
+let syncTimer = null;
+
+/* ══════════════════════════════════════════════════════════════
+   AUTH
+   ══════════════════════════════════════════════════════════════ */
+async function init() {
+  if (!CONFIGURED) {
+    document.getElementById('config-banner').style.display = 'block';
+    showApp({ email: 'demo@local', user_metadata: { name: 'Demo User' } });
+    return;
+  }
+
+  const { data: { session } } = await supabase.auth.getSession();
+
+  supabase.auth.onAuthStateChange(async (event, session) => {
+    if (session?.user) {
+      await showApp(session.user);
+    } else {
+      showAuth();
+    }
+  });
+
+  if (session?.user) {
+    await showApp(session.user);
+  } else {
+    showAuth();
+  }
+}
+
+function showAuth() {
+  document.getElementById('loading-screen').style.display = 'none';
+  document.getElementById('auth-screen').style.display = 'flex';
+  document.getElementById('app').style.display = 'none';
+}
+
+async function showApp(user) {
+  currentUser = user;
+  document.getElementById('loading-screen').style.display = 'none';
+  document.getElementById('auth-screen').style.display = 'none';
+  document.getElementById('app').style.display = 'block';
+
+  // User pill
+  const name = user.user_metadata?.name || user.email?.split('@')[0] || 'User';
+  document.getElementById('user-name').textContent = name;
+  document.getElementById('user-avatar').textContent = name[0].toUpperCase();
+  if (user.user_metadata?.avatar_url) {
+    document.getElementById('user-avatar').innerHTML =
+      `<img class="user-avatar" src="${user.user_metadata.avatar_url}" alt="">`;
+  }
+
+  // Topic subtitle
+  document.getElementById('topic-subtitle').textContent =
+    `Striver A2Z · ${TOPICS.map(t => t.name).join(' · ')}`;
+
+  await loadProgress();
+  renderChips();
+  render();
+}
+
+async function signInWithGoogle() {
+  if (!CONFIGURED) return;
+  const { error } = await supabase.auth.signInWithOAuth({
+    provider: 'google',
+    options: { redirectTo: window.location.origin + window.location.pathname }
+  });
+  if (error) toast('Sign-in failed: ' + error.message);
+}
+
+async function signOut() {
+  if (supabase) await supabase.auth.signOut();
+  state = {}; showAuth();
+}
+
+/* ══════════════════════════════════════════════════════════════
+   SUPABASE DATA LAYER
+   ══════════════════════════════════════════════════════════════ */
+function setSyncStatus(status) {
+  const dot = document.getElementById('sync-dot');
+  dot.className = 'sync-dot' + (status === 'syncing' ? ' syncing' : status === 'error' ? ' error' : '');
+  dot.title = status === 'syncing' ? 'Syncing…' : status === 'error' ? 'Sync failed' : 'Synced';
+}
+
+async function loadProgress() {
+  if (!CONFIGURED || !currentUser) return;
+  setSyncStatus('syncing');
+  try {
+    const { data, error } = await supabase
+      .from('progress')
+      .select('problem_id, status, attempts, last_solved')
+      .eq('user_id', currentUser.id);
+    if (error) throw error;
+    state = {};
+    (data || []).forEach(row => {
+      state[row.problem_id] = {
+        status: row.status,
+        attempts: row.attempts,
+        last_solved: row.last_solved
+      };
+    });
+    setSyncStatus('ok');
+  } catch(e) {
+    setSyncStatus('error');
+    toast('Could not load progress from server.');
+    console.error(e);
+  }
+}
+
+// Debounced batch write — waits 800ms after last change then flushes all pending
+function scheduleSave(id) {
+  syncQueue[id] = state[id];
+  setSyncStatus('syncing');
+  clearTimeout(syncTimer);
+  syncTimer = setTimeout(flushSave, 800);
+}
+
+async function flushSave() {
+  if (!CONFIGURED || !currentUser) return;
+  const rows = Object.entries(syncQueue).map(([id, s]) => ({
+    user_id: currentUser.id,
+    problem_id: parseInt(id),
+    status:     s.status,
+    attempts:   s.attempts,
+    last_solved: s.last_solved,
+    updated_at: new Date().toISOString()
+  }));
+  syncQueue = {};
+  try {
+    const { error } = await supabase.from('progress').upsert(rows, { onConflict: 'user_id,problem_id' });
+    if (error) throw error;
+    setSyncStatus('ok');
+  } catch(e) {
+    setSyncStatus('error');
+    toast('Sync failed — will retry next change.');
+    console.error(e);
+  }
+}
+
+/* ══════════════════════════════════════════════════════════════
+   HELPERS
+   ══════════════════════════════════════════════════════════════ */
+function getP(id) { return state[id] || { status: 'not-started', attempts: 0, last_solved: null }; }
+function today() { return new Date().toISOString().split('T')[0]; }
+function fmtDate(d) {
+  if (!d) return '';
+  const dt = new Date(d + 'T00:00:00');
+  return dt.getDate() + ' ' + dt.toLocaleString('default', { month: 'short' });
+}
+function toast(msg) {
+  const el = document.getElementById('toast');
+  el.textContent = msg; el.classList.add('show');
+  setTimeout(() => el.classList.remove('show'), 2400);
+}
+
+/* ══════════════════════════════════════════════════════════════
+   ACTIONS
+   ══════════════════════════════════════════════════════════════ */
+function cycleStatus(id) {
+  const p = getP(id);
+  const next = { 'not-started': 'done', 'done': 'revise', 'revise': 'not-started' };
+  if (!state[id]) state[id] = { status: 'not-started', attempts: 0, last_solved: null };
+  state[id].status = next[p.status];
+  if (state[id].status !== 'not-started') {
+    if (!state[id].attempts) state[id].attempts = 1;
+    state[id].last_solved = today();
+  }
+  scheduleSave(id); render();
+}
+
+function changeAtt(id, delta) {
+  if (!state[id]) state[id] = { status: 'not-started', attempts: 0, last_solved: null };
+  state[id].attempts = Math.max(0, (state[id].attempts || 0) + delta);
+  if (delta > 0) {
+    state[id].last_solved = today();
+    if (state[id].status === 'not-started') state[id].status = 'done';
+  }
+  scheduleSave(id); render();
+}
+
+/* ══════════════════════════════════════════════════════════════
+   PATTERN COLOURS
+   ══════════════════════════════════════════════════════════════ */
+const PAT_COLORS = [
+  {bg:'rgba(59,130,246,.15)',  c:'#93c5fd', b:'rgba(59,130,246,.3)'},
+  {bg:'rgba(168,85,247,.15)', c:'#c4b5fd', b:'rgba(168,85,247,.3)'},
+  {bg:'rgba(20,184,166,.15)', c:'#5eead4', b:'rgba(20,184,166,.3)'},
+  {bg:'rgba(244,114,182,.15)',c:'#f9a8d4', b:'rgba(244,114,182,.3)'},
+  {bg:'rgba(34,211,238,.15)', c:'#67e8f9', b:'rgba(34,211,238,.3)'},
+  {bg:'rgba(251,191,36,.15)', c:'#fcd34d', b:'rgba(251,191,36,.3)'},
+  {bg:'rgba(74,222,128,.15)', c:'#86efac', b:'rgba(74,222,128,.3)'},
+  {bg:'rgba(248,113,113,.15)',c:'#fca5a5', b:'rgba(248,113,113,.3)'},
+  {bg:'rgba(129,140,248,.15)',c:'#a5b4fc', b:'rgba(129,140,248,.3)'},
+  {bg:'rgba(52,211,153,.15)', c:'#6ee7b7', b:'rgba(52,211,153,.3)'},
+  {bg:'rgba(251,146,60,.15)', c:'#fdba74', b:'rgba(251,146,60,.3)'},
+  {bg:'rgba(232,121,249,.15)',c:'#f0abfc', b:'rgba(232,121,249,.3)'},
+];
+const PAT_MAP = {};
+ALL_PATTERNS.forEach((p, i) => { PAT_MAP[p] = PAT_COLORS[i % PAT_COLORS.length]; });
+const DIFF_MAP = {
+  Easy:   {bg:'rgba(34,197,94,.12)',  c:'#22c55e', b:'rgba(34,197,94,.35)'},
+  Medium: {bg:'rgba(245,158,11,.12)', c:'#f59e0b', b:'rgba(245,158,11,.35)'},
+  Hard:   {bg:'rgba(239,68,68,.12)',  c:'#ef4444', b:'rgba(239,68,68,.35)'},
+};
+
+function ptag(label, style) {
+  const s = style;
+  return `<span class="ptag" style="background:${s.bg};color:${s.c};border-color:${s.b}">${label}</span>`;
+}
+
+/* ══════════════════════════════════════════════════════════════
+   RENDER
+   ══════════════════════════════════════════════════════════════ */
+function renderChips() {
+  document.getElementById('chip-bar').innerHTML =
+    ALL_PATTERNS.map(p => {
+      const s = PAT_MAP[p];
+      const active = activePattern === p;
+      return `<button class="chip${active?' active':''}" data-pattern="${p}"
+        style="${active?'':` color:${s.c};border-color:${s.b};background:${s.bg}`}">${p}</button>`;
+    }).join('');
+}
+
+function render() {
+  const search  = document.getElementById('search').value.toLowerCase().trim();
+  const fStatus = document.getElementById('f-status').value;
+  const fDiff   = document.getElementById('f-diff').value;
+
+  let done = 0, revise = 0;
+  IDX.forEach(({ id }) => {
+    const p = getP(id);
+    if (p.status === 'done')   done++;
+    if (p.status === 'revise') revise++;
+  });
+  const pct = TOTAL > 0 ? Math.round((done + revise) / TOTAL * 100) : 0;
+  document.getElementById('s-total').textContent  = TOTAL;
+  document.getElementById('s-done').textContent   = done;
+  document.getElementById('s-revise').textContent = revise;
+  document.getElementById('s-ns').textContent     = TOTAL - done - revise;
+  document.getElementById('overall-fill').style.width = pct + '%';
+  document.getElementById('pct-label').textContent = pct + '%';
+
+  renderChips();
+
+  let html = '';
+  TOPICS.forEach((topic, ti) => {
+    let tDone = 0, tTotal = 0, secHtml = '', anyVisible = false;
+
+    topic.sections.forEach((sec, si) => {
+      let rowsHtml = '';
+      sec.problems.forEach((prob, pi) => {
+        const entry = IDX.find(e => e.ti === ti && e.si === si && e.pi === pi);
+        if (!entry) return;
+        const { id } = entry;
+        const p = getP(id);
+        tTotal++;
+        if (p.status === 'done' || p.status === 'revise') tDone++;
+
+        if (fStatus !== 'all' && p.status !== fStatus) return;
+        if (fDiff   !== 'all' && prob.difficulty !== fDiff) return;
+        if (activePattern && !prob.patterns.includes(activePattern)) return;
+        if (search && !prob.name.toLowerCase().includes(search) &&
+            !prob.patterns.some(pt => pt.toLowerCase().includes(search))) return;
+
+        anyVisible = true;
+        const pillClass = {
+          'not-started': 'pill-ns', 'done': 'pill-done', 'revise': 'pill-revise'
+        }[p.status];
+        const pillText = {
+          'not-started': 'Not started', 'done': 'Done ✓', 'revise': 'To revise'
+        }[p.status];
+
+        const tags = ptag(prob.difficulty, DIFF_MAP[prob.difficulty]) +
+          prob.patterns.map(pt => ptag(pt, PAT_MAP[pt] || PAT_COLORS[0])).join('');
+
+        rowsHtml += `
+          <div class="prob-row">
+            <span class="prob-name" title="${prob.name}">${prob.name}</span>
+            <div class="prob-tags">${tags}</div>
+            <button class="status-pill ${pillClass}" data-action="status" data-id="${id}">${pillText}</button>
+            <div class="attempts">
+              <button class="att-btn" data-action="dec" data-id="${id}">−</button>
+              <span class="att-count">${p.attempts || 0}</span>
+              <button class="att-btn" data-action="inc" data-id="${id}">+</button>
+            </div>
+            <span class="last-date">${fmtDate(p.last_solved)}</span>
+          </div>`;
+      });
+      if (rowsHtml) secHtml += `<div class="sec-label">${sec.name}</div>${rowsHtml}`;
+    });
+
+    if (!anyVisible && (search || fStatus !== 'all' || fDiff !== 'all' || activePattern)) return;
+    const pct2 = tTotal > 0 ? Math.round(tDone / tTotal * 100) : 0;
+    const open  = topicOpen[ti] || !!(search || activePattern);
+
+    html += `
+      <div class="topic-card">
+        <div class="topic-hdr" data-action="toggle" data-ti="${ti}">
+          <div class="topic-left">
+            <div class="topic-dot" style="background:${topic.color}"></div>
+            <span class="topic-name">${topic.name}</span>
+            <span class="topic-meta">${tDone}/${tTotal} · ${pct2}%</span>
+          </div>
+          <svg class="topic-chevron ${open?'open':''}" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><polyline points="4,6 8,10 12,6"/></svg>
+        </div>
+        <div class="topic-pbar"><div class="topic-pfill" style="width:${pct2}%;background:${topic.color}"></div></div>
+        <div class="topic-body${open?' open':''}">
+          ${secHtml || '<div class="empty">No problems match the current filters.</div>'}
+        </div>
+      </div>`;
+  });
+
+  document.getElementById('container').innerHTML = html ||
+    '<div class="empty">No problems match your search.</div>';
+}
+
+/* ══════════════════════════════════════════════════════════════
+   EVENTS
+   ══════════════════════════════════════════════════════════════ */
+document.addEventListener('click', e => {
+  const s = e.target.closest('[data-action="status"]'); if (s) { cycleStatus(+s.dataset.id); return; }
+  const i = e.target.closest('[data-action="inc"]');    if (i) { changeAtt(+i.dataset.id,  1); return; }
+  const d = e.target.closest('[data-action="dec"]');    if (d) { changeAtt(+d.dataset.id, -1); return; }
+  const t = e.target.closest('[data-action="toggle"]');
+  if (t) { topicOpen[+t.dataset.ti] = !topicOpen[+t.dataset.ti]; render(); return; }
+  const c = e.target.closest('.chip');
+  if (c) { activePattern = activePattern === c.dataset.pattern ? null : c.dataset.pattern; render(); return; }
+});
+document.getElementById('search').addEventListener('input', render);
+document.getElementById('f-status').addEventListener('change', render);
+document.getElementById('f-diff').addEventListener('change', render);
+
+/* ══════════════════════════════════════════════════════════════
+   BOOT
+   ══════════════════════════════════════════════════════════════ */
+init();
+</script>
+</body>
+</html>
